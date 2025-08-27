@@ -1,9 +1,10 @@
 "use client";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { supabase } from "../../../lib/supabaseClient";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
@@ -13,8 +14,8 @@ export default function LoginForm() {
   const [showReset, setShowReset] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetMsg, setResetMsg] = useState("");
-
   const router = useRouter();
+  const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +27,7 @@ export default function LoginForm() {
       setLoading(false);
       return;
     }
-    router.push("/users-profile");
+    router.push("/profile");
     setLoading(false);
   };
 
@@ -48,7 +49,7 @@ export default function LoginForm() {
             type="email"
             placeholder="Enter your email address"
             value={resetEmail}
-            onChange={e => setResetEmail(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setResetEmail(e.target.value)}
             required
           />
           {resetMsg && <div className={resetMsg.startsWith('Password reset') ? "text-green-600 text-sm" : "text-red-500 text-sm"}>{resetMsg}</div>}
@@ -67,7 +68,7 @@ export default function LoginForm() {
                 type="email"
                 placeholder="Enter your email address"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                 required
               />
               <label className="block text-sm font-medium text-gray-700" htmlFor="login-password">Password</label>
@@ -76,7 +77,7 @@ export default function LoginForm() {
                 type="password"
                 placeholder="Enter your password"
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 required
               />
               {error && <div className="text-red-500 text-sm mt-2">{error}</div>}

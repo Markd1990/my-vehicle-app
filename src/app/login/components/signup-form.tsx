@@ -1,16 +1,16 @@
 "use client";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+ 
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { useToast } from "@/components/ui/use-toast";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
-export default function SignupForm() {
+export default function SignupForm({ onShowLoginAction }: { onShowLoginAction?: () => void } = {}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+ 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
@@ -28,29 +28,34 @@ export default function SignupForm() {
       setLoading(false);
       return;
     }
+  
+ 
     // Insert into profiles table if signup succeeded
     const user = data.user || data.session?.user;
     if (user) {
       const { error: profileError } = await supabase.from("profiles").insert([
         {
           id: user.id,
-          email,
+          user_email: email,
           role: "client",
         },
       ]);
-      if (profileError) setError(profileError.message);
-      // Show login form after successful signup
+      if (profileError) {
+        setError(profileError.message);
+        setLoading(false);
+        return;
+      }
       setSuccess("");
       setLoading(false);
-      // Optionally, clear fields
       setEmail("");
       setPassword("");
-      // You can use a callback/prop or global state to show the login form modal if needed
-      // For now, just display a message
       toast("Signup successful 🎉", {
         description: "You can now log in with your new account.",
-        duration: 5000,
+        duration: 2000,
       });
+      setTimeout(() => {
+        router.refresh();
+      }, 2000);
       return;
     }
     setSuccess("Check your email to confirm your account.");
