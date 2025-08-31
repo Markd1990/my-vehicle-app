@@ -7,33 +7,45 @@ import { Mail, Phone, MapPin, Building2, Car, BarChart2, Lock, Bell, HelpCircle,
 export default function OwnersProfilePage() {
   return (
     <div className="max-w-4xl mx-auto py-10 px-2 sm:px-4 space-y-8">
-      {/* 1. Personal Information */}
-      <Card className="p-6 flex flex-col sm:flex-row gap-6 items-center">
+      {/* 1. Account Info */}
+      <Card className="relative rounded-xl shadow-lg p-6 flex flex-col sm:flex-row gap-6 items-center">
+        <div className="absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-blue-600">
+          <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil w-5 h-5"><path d="M15.232 5.232l3.536 3.536M9 11l6 6M3 21h6l11.293-11.293a1 1 0 0 0 0-1.414l-3.586-3.586a1 1 0 0 0-1.414 0L3 15v6z"></path></svg>
+        </div>
         <div className="flex flex-col items-center">
           <div className="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mb-2">
             <User className="w-10 h-10 text-gray-400" />
           </div>
-          <div className="font-semibold text-lg">Alex Rental</div>
         </div>
-        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="flex items-center gap-2 text-gray-700"><Mail className="w-4 h-4" /> alex@rental.com</div>
-          <div className="flex items-center gap-2 text-gray-700"><Phone className="w-4 h-4" /> +1 555-123-4567</div>
-          <div className="flex items-center gap-2 text-gray-700 col-span-2"><MapPin className="w-4 h-4" /> 123 Main St, Springfield</div>
+        <div className="flex-1">
+          <div className="font-semibold text-lg mb-2">Account Info</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex items-center gap-2 text-gray-700"><User className="w-4 h-4" /> Alex Rental</div>
+            <div className="flex items-center gap-2 text-gray-700"><Mail className="w-4 h-4" /> alex@rental.com</div>
+            <div className="flex items-center gap-2 text-gray-700"><Phone className="w-4 h-4" /> +1 555-123-4567</div>
+            <div className="flex items-center gap-2 text-gray-700 col-span-2"><MapPin className="w-4 h-4" /> 123 Main St, Springfield</div>
+          </div>
         </div>
       </Card>
 
-      {/* 2. Business Information */}
-      <Card className="p-6 flex flex-col sm:flex-row gap-6 items-center">
+      {/* 2. Business Info */}
+      <Card className="relative rounded-xl shadow-lg p-6 flex flex-col sm:flex-row gap-6 items-center">
+        <div className="absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-blue-600">
+          <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil w-5 h-5"><path d="M15.232 5.232l3.536 3.536M9 11l6 6M3 21h6l11.293-11.293a1 1 0 0 0 0-1.414l-3.586-3.586a1 1 0 0 0-1.414 0L3 15v6z"></path></svg>
+        </div>
         <div className="flex flex-col items-center">
           <div className="bg-gray-100 rounded w-20 h-20 flex items-center justify-center mb-2">
             <Briefcase className="w-10 h-10 text-gray-400" />
           </div>
-          <div className="font-semibold text-lg">Springfield Rentals LLC</div>
         </div>
-        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="flex items-center gap-2 text-gray-700"><Building2 className="w-4 h-4" /> Reg. No: 987654321</div>
-          <div className="flex items-center gap-2 text-gray-700"><Mail className="w-4 h-4" /> payouts@springfieldrentals.com</div>
-          <div className="flex items-center gap-2 text-gray-700 col-span-2"><BarChart2 className="w-4 h-4" /> Payout: Bank of Springfield, ****1234</div>
+        <div className="flex-1">
+          <div className="font-semibold text-lg mb-2">Business Info</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex items-center gap-2 text-gray-700"><Building2 className="w-4 h-4" /> Springfield Rentals LLC</div>
+            <div className="flex items-center gap-2 text-gray-700"><Mail className="w-4 h-4" /> payouts@springfieldrentals.com</div>
+            <div className="flex items-center gap-2 text-gray-700"><Phone className="w-4 h-4" /> +1 555-987-6543</div>
+            <div className="flex items-center gap-2 text-gray-700 col-span-2"><MapPin className="w-4 h-4" /> 456 Commerce Ave, Springfield</div>
+          </div>
         </div>
       </Card>
 

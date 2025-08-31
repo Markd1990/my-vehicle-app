@@ -30,6 +30,7 @@ export default function LoginForm() {
     }
     // After successful login, check if profile exists, if not, create it
     const user = data.user;
+    let redirectPath = "/profile";
     if (user) {
       const { data: profile, error: profileFetchError } = await supabase
         .from("profiles")
@@ -53,8 +54,15 @@ export default function LoginForm() {
           return;
         }
       }
+      // Set redirect path based on role
+      const role = user.user_metadata?.role;
+      if (role === "client") {
+        redirectPath = "/client/profile";
+      } else if (role === "rentalowner" || role === "rental-owner" || role === "rental_owner") {
+        redirectPath = "/owners-profile";
+      }
     }
-    router.push("/profile");
+    router.push(redirectPath);
     setLoading(false);
   };
 
