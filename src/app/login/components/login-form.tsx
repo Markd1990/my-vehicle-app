@@ -14,6 +14,7 @@ export default function LoginForm() {
   const [showReset, setShowReset] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetMsg, setResetMsg] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -21,11 +22,37 @@ export default function LoginForm() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setError("Invalid email or password");
       setLoading(false);
       return;
+    }
+    // After successful login, check if profile exists, if not, create it
+    const user = data.user;
+    if (user) {
+      const { data: profile, error: profileFetchError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", user.id)
+        .single();
+      if (!profile) {
+        // Try to get the role from user_metadata, fallback to 'client'
+        let role = user.user_metadata?.role || "client";
+        if (role === "rental-owner" || role === "rental_owner") role = "rentalowner";
+        const { error: profileInsertError } = await supabase.from("profiles").insert([
+          {
+            id: user.id,
+            user_email: user.email,
+            role: role,
+          },
+        ]);
+        if (profileInsertError) {
+          setError(profileInsertError.message);
+          setLoading(false);
+          return;
+        }
+      }
     }
     router.push("/profile");
     setLoading(false);
@@ -72,14 +99,24 @@ export default function LoginForm() {
                 required
               />
               <label className="block text-sm font-medium text-gray-700" htmlFor="login-password">Password</label>
-              <Input
-                id="login-password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="login-password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 text-xs"
+                  tabIndex={-1}
+                  onClick={() => setShowPassword((v) => !v)}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
               {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
               <Button type="submit" className="w-full mt-2" disabled={loading}>
                 {loading ? "Signing in..." : "Sign In"}

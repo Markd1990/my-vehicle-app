@@ -6,10 +6,18 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 export default function SignupForm({ onShowLoginAction }: { onShowLoginAction?: () => void } = {}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
  
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,44 +30,28 @@ export default function SignupForm({ onShowLoginAction }: { onShowLoginAction?: 
     setLoading(true);
     setError("");
     setSuccess("");
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { role },
+      },
+    });
     if (error) {
       setError(error.message);
       setLoading(false);
       return;
     }
-  
- 
-    // Insert into profiles table if signup succeeded
-    const user = data.user || data.session?.user;
-    if (user) {
-      const { error: profileError } = await supabase.from("profiles").insert([
-        {
-          id: user.id,
-          user_email: email,
-          role: "client",
-        },
-      ]);
-      if (profileError) {
-        setError(profileError.message);
-        setLoading(false);
-        return;
-      }
-      setSuccess("");
-      setLoading(false);
-      setEmail("");
-      setPassword("");
-      toast("Signup successful 🎉", {
-        description: "You can now log in with your new account.",
-        duration: 2000,
-      });
-      setTimeout(() => {
-        router.refresh();
-      }, 2000);
-      return;
-    }
+    // Do NOT insert into profiles here (RLS will block it)
     setSuccess("Check your email to confirm your account.");
     setLoading(false);
+    setEmail("");
+    setPassword("");
+    // Optionally, you can toast here as well
+    toast("Signup successful 🎉", {
+      description: "Check your email for a confirmation link.",
+      duration: 2000,
+    });
   };
 
   return (
@@ -74,14 +66,40 @@ export default function SignupForm({ onShowLoginAction }: { onShowLoginAction?: 
         required
       />
       <label className="block text-sm font-medium text-gray-700" htmlFor="signup-password">Password</label>
-      <Input
-        id="signup-password"
-        type="password"
-        placeholder="Create a password"
-        value={password}
-        onChange={e => setPassword(e.target.value)}
-        required
-      />
+      <div className="relative">
+        <Input
+          id="signup-password"
+          type={showPassword ? "text" : "password"}
+          placeholder="Create a password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          required
+        />
+        <button
+          type="button"
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 text-xs"
+          tabIndex={-1}
+          onClick={() => setShowPassword((v) => !v)}
+        >
+          {showPassword ? "Hide" : "Show"}
+        </button>
+      </div>
+      <label className="block text-sm font-medium text-gray-700" htmlFor="signup-role">Role</label>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            className="w-full justify-between mb-2"
+            type="button"
+          >
+            {role === "Choose Role" ? "Select a role" : role.charAt(0).toUpperCase() + role.slice(1).replace("-", " ")}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-full">
+          <DropdownMenuItem onSelect={() => setRole("client")}>Client</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setRole("rental_owner")}>Rental Owner</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       {error && <div className="text-red-500 text-sm">{error}</div>}
       {success && <div className="text-green-600 text-sm">{success}</div>}
       <Button type="submit" className="w-full" disabled={loading}>

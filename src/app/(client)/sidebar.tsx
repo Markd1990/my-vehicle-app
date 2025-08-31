@@ -1,3 +1,5 @@
+"use client";
+
 import {
   LayoutDashboard,
   Car,
@@ -6,17 +8,22 @@ import {
   FileText,
   Users,
   HelpCircle,
-  Badge
+  Badge,
+  LogOut
 } from "lucide-react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
 export default function Sidebar() {
+  const router = useRouter();
+
   return (
     <aside className="w-56 bg-gray-50 min-h-screen p-4">
       <nav className="flex flex-col gap-6">
         {[
           {
-            href: "/client",
+            href: "/dashboard",
             icon: LayoutDashboard,
             label: "Dashboard",
           },
@@ -46,7 +53,7 @@ export default function Sidebar() {
             label: "Community",
           },
           {
-            href: "#",
+            href: "/client-support",
             icon: HelpCircle,
             label: "Support",
           },
@@ -62,6 +69,16 @@ export default function Sidebar() {
           </Link>
         ))}
       </nav>
+      <button
+        className="flex items-center gap-3 text-red-600 hover:text-red-800 mt-8 w-full px-4 py-2 rounded transition"
+        onClick={async () => {
+          await supabase.auth.signOut();
+          router.push("/login");
+        }}
+      >
+        <LogOut className="w-5 h-5" />
+        <span>Logout</span>
+      </button>
     </aside>
   );
 }
