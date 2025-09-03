@@ -240,7 +240,15 @@ export default function MyVehiclesPage() {
           {vehicleList.map((v: Vehicle) => (
             <Card key={v.id} className="p-4 flex flex-col gap-3 rounded-xl shadow">
               <div className="bg-gray-100 rounded-lg h-32 flex items-center justify-center mb-2">
-                <Car className="w-12 h-12 text-gray-400" />
+                {v.vehicle_image ? (
+                  <img
+                    src={v.vehicle_image}
+                    alt={v.vehicle_name}
+                    className="object-contain h-28 w-full"
+                  />
+                ) : (
+                  <Car className="w-12 h-12 text-gray-400" />
+                )}
               </div>
               <div className="font-semibold text-lg">{v.vehicle_name}</div>
               <div className="text-gray-600 text-sm">Type: {v.vehicle_type}</div>
