@@ -142,7 +142,12 @@ export default function MyVehiclesPage() {
       toast("Vehicle added", { description: `${vehicle_name} has been added.` });
       // Do NOT close the modal
     } catch (err: any) {
-      setError(err.message || "An error occurred");
+      // Enhanced error handling for network/session issues
+      if (err?.message === 'Failed to fetch' || err?.name === 'TypeError') {
+        setError('Network or session lost. Please refresh the page.');
+      } else {
+        setError(err.message || 'An error occurred');
+      }
       setLoading(false);
     }
   };
