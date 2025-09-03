@@ -1,10 +1,43 @@
 "use client";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mail, Phone, MapPin, Building2, Car, BarChart2, Lock, Bell, HelpCircle, User, Briefcase } from "lucide-react";
 
 export default function OwnersProfilePage() {
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+      // Debug: log user.id
+      console.log('Supabase Auth user.id:', user.id);
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, user_name, user_email, avatar_url, contact_number, address, role")
+        .eq("id", user.id)
+        .single();
+      if (profileError) {
+        console.error('Profile fetch error:', profileError.message);
+      }
+      // Debug: log profileData
+      console.log('Profile data:', profileData);
+      setProfile(profileData ? { ...profileData, user_email: user.email } : null);
+      setLoading(false);
+    };
+    fetchProfile();
+  }, []);
+
+  if (loading) return <div className="text-center py-10">Loading...</div>;
+  if (!profile) return <div className="text-center py-10">Profile not found.</div>;
+
   return (
     <div className="max-w-4xl mx-auto py-10 px-2 sm:px-4 space-y-8">
       {/* 1. Account Info */}
@@ -20,10 +53,10 @@ export default function OwnersProfilePage() {
         <div className="flex-1">
           <div className="font-semibold text-lg mb-2">Account Info</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex items-center gap-2 text-gray-700"><User className="w-4 h-4" /> Alex Rental</div>
-            <div className="flex items-center gap-2 text-gray-700"><Mail className="w-4 h-4" /> alex@rental.com</div>
-            <div className="flex items-center gap-2 text-gray-700"><Phone className="w-4 h-4" /> +1 555-123-4567</div>
-            <div className="flex items-center gap-2 text-gray-700 col-span-2"><MapPin className="w-4 h-4" /> 123 Main St, Springfield</div>
+            <div className="flex items-center gap-2 text-gray-700"><User className="w-4 h-4" /> {profile.user_name || "-"}</div>
+            <div className="flex items-center gap-2 text-gray-700"><Mail className="w-4 h-4" /> {profile.user_email || "-"}</div>
+            <div className="flex items-center gap-2 text-gray-700"><Phone className="w-4 h-4" /> {profile.contact_number || "-"}</div>
+            <div className="flex items-center gap-2 text-gray-700 col-span-2"><MapPin className="w-4 h-4" /> {profile.address || "-"}</div>
           </div>
         </div>
       </Card>
@@ -41,10 +74,10 @@ export default function OwnersProfilePage() {
         <div className="flex-1">
           <div className="font-semibold text-lg mb-2">Business Info</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex items-center gap-2 text-gray-700"><Building2 className="w-4 h-4" /> Springfield Rentals LLC</div>
-            <div className="flex items-center gap-2 text-gray-700"><Mail className="w-4 h-4" /> payouts@springfieldrentals.com</div>
-            <div className="flex items-center gap-2 text-gray-700"><Phone className="w-4 h-4" /> +1 555-987-6543</div>
-            <div className="flex items-center gap-2 text-gray-700 col-span-2"><MapPin className="w-4 h-4" /> 456 Commerce Ave, Springfield</div>
+            <div className="flex items-center gap-2 text-gray-700"><Building2 className="w-4 h-4" /> {profile.business_name || "-"}</div>
+            <div className="flex items-center gap-2 text-gray-700"><Mail className="w-4 h-4" /> {profile.business_email || "-"}</div>
+            <div className="flex items-center gap-2 text-gray-700"><Phone className="w-4 h-4" /> {profile.business_phone || "-"}</div>
+            <div className="flex items-center gap-2 text-gray-700 col-span-2"><MapPin className="w-4 h-4" /> {profile.business_address || "-"}</div>
           </div>
         </div>
       </Card>
@@ -55,7 +88,7 @@ export default function OwnersProfilePage() {
           <Car className="w-10 h-10 text-blue-500" />
           <div>
             <div className="font-semibold text-lg">Vehicle Inventory</div>
-            <div className="text-gray-600 text-sm">12 vehicles managed</div>
+            <div className="text-gray-600 text-sm">- vehicles managed</div>
           </div>
         </div>
         <div className="flex gap-3 mt-4 sm:mt-0">
@@ -71,28 +104,28 @@ export default function OwnersProfilePage() {
         <Card className="p-6 flex items-center gap-4">
           <Car className="w-8 h-8 text-blue-500" />
           <div>
-            <div className="font-bold text-xl">12</div>
+            <div className="font-bold text-xl">-</div>
             <div className="text-gray-600 text-sm">Total Vehicles</div>
           </div>
         </Card>
         <Card className="p-6 flex items-center gap-4">
           <BarChart2 className="w-8 h-8 text-green-500" />
           <div>
-            <div className="font-bold text-xl">87</div>
+            <div className="font-bold text-xl">-</div>
             <div className="text-gray-600 text-sm">Completed Bookings</div>
           </div>
         </Card>
         <Card className="p-6 flex items-center gap-4">
           <Car className="w-8 h-8 text-yellow-500" />
           <div>
-            <div className="font-bold text-xl">3</div>
+            <div className="font-bold text-xl">-</div>
             <div className="text-gray-600 text-sm">Ongoing Rentals</div>
           </div>
         </Card>
         <Card className="p-6 flex items-center gap-4">
           <BarChart2 className="w-8 h-8 text-purple-500" />
           <div>
-            <div className="font-bold text-xl">$4,200</div>
+            <div className="font-bold text-xl">-</div>
             <div className="text-gray-600 text-sm">Monthly Earnings</div>
           </div>
         </Card>

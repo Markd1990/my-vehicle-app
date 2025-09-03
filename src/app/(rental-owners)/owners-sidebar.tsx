@@ -22,6 +22,11 @@ export default function OwnerSidebar() {
     <aside className="w-56 bg-gray-50 min-h-screen p-4">
       <nav className="flex flex-col gap-6">
         {[
+             {
+            href: "/owners-profile",
+            icon: FileText,
+            label: "Owners Profile",
+          },
           {
             href: "/owner-dashboard",
             icon: LayoutDashboard,
@@ -38,15 +43,11 @@ export default function OwnerSidebar() {
             label: "Clients",
           },
           {
-            href: "/settings",
-            icon: MapPin,
-            label: "Settings",
+            href: "/my-vehicles",
+            icon: Calendar,
+            label: "My Vehicles",
           },
-          {
-            href: "/owners-profile",
-            icon: FileText,
-            label: "Owners Profile",
-          },
+       
           {
             href: "/community",
             icon: Users,
@@ -56,6 +57,11 @@ export default function OwnerSidebar() {
             href: "/owners-support",
             icon: HelpCircle,
             label: "Support",
+          },
+               {
+            href: "/settings",
+            icon: MapPin,
+            label: "Settings",
           },
           {
             href: "/fleet-management",

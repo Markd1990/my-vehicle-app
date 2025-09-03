@@ -44,6 +44,7 @@ export default function LoginForm() {
         const { error: profileInsertError } = await supabase.from("profiles").insert([
           {
             id: user.id,
+            users_id: user.id, // <-- Add this line to set users_id
             user_email: user.email,
             role: role,
           },
