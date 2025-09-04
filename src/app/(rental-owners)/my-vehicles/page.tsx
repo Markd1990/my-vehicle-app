@@ -20,6 +20,8 @@ interface Vehicle {
   seats?: number | null;
   mileage?: number | null;
   vehicle_image?: string | null;
+  airconditioned?: boolean;
+  free_cancellation?: boolean;
 }
 
 export default function MyVehiclesPage() {
@@ -31,6 +33,8 @@ export default function MyVehiclesPage() {
   const formRef = useRef<HTMLFormElement>(null);
   // State for viewing a vehicle
   const [viewVehicle, setViewVehicle] = useState<Vehicle | null>(null);
+  // Edit Vehicle Modal state
+  const [editVehicle, setEditVehicle] = useState<Vehicle | null>(null);
 
   useEffect(() => {
     const fetchVehicles = async () => {
@@ -73,6 +77,8 @@ export default function MyVehiclesPage() {
       const fuel_type = formData.get("fuel_type")?.toString() || null;
       const seats = formData.get("seats") ? Number(formData.get("seats")) : null;
       const mileage = formData.get("mileage") ? Number(formData.get("mileage")) : null;
+      const airconditioned = formData.get("airconditioned") === "on";
+      const free_cancellation = formData.get("free_cancellation") === "on";
 
       // Validate required fields
       if (!vehicle_name || !plate_number || !price_perday) {
@@ -124,6 +130,8 @@ export default function MyVehiclesPage() {
             seats: seats ? Number(seats) : null,
             mileage: mileage ? Number(mileage) : null,
             vehicle_image,
+            airconditioned,
+            free_cancellation,
           },
         ])
         .select()
@@ -148,6 +156,33 @@ export default function MyVehiclesPage() {
       } else {
         setError(err.message || 'An error occurred');
       }
+      setLoading(false);
+    }
+  };
+
+  // Edit vehicle handler
+  const handleEditVehicle = async (id: number, updatedFields: Partial<Vehicle>) => {
+    setLoading(true);
+    setError("");
+    try {
+      const { error: updateError, data: updatedVehicle } = await supabase
+        .from("vehicles")
+        .update(updatedFields)
+        .eq("id", id)
+        .select()
+        .single();
+      if (updateError) {
+        setError(updateError.message);
+        setLoading(false);
+        return;
+      }
+      setVehicleList((prev) =>
+        prev.map((v) => (v.id === id ? { ...v, ...updatedVehicle } : v))
+      );
+      toast("Vehicle updated", { description: `Vehicle has been updated.` });
+      setLoading(false);
+    } catch (err: any) {
+      setError(err.message || "An error occurred");
       setLoading(false);
     }
   };
@@ -227,6 +262,14 @@ export default function MyVehiclesPage() {
                 <Gauge className="w-5 h-5 text-gray-400 mt-2" />
                 <Input name="mileage" type="number" min={0} placeholder="Mileage (e.g. 50000)" />
               </div>
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="airconditioned" name="airconditioned" className="accent-primary" />
+                <label htmlFor="airconditioned" className="text-sm">Airconditioned</label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="free_cancellation" name="free_cancellation" className="accent-primary" />
+                <label htmlFor="free_cancellation" className="text-sm">Free Cancellation</label>
+              </div>
               <select name="status" className="w-full border border-input bg-background rounded-md px-3 py-2 text-sm focus:outline-none">
                 <option value="Available">Available</option>
                 <option value="Rented">Rented</option>
@@ -260,9 +303,17 @@ export default function MyVehiclesPage() {
               <div className="text-gray-600 text-sm">Plate: {v.plate_number}</div>
               <div className="text-gray-600 text-sm">Price/Day: <span className="font-medium text-black">${v.price_perday}</span></div>
               <div className={`text-xs font-semibold rounded px-2 py-1 w-fit ${v.status === "Available" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>{v.status}</div>
+              <div className="flex gap-2 items-center text-sm">
+                {v.airconditioned && (
+                  <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-medium">Airconditioned</span>
+                )}
+                {v.free_cancellation && (
+                  <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded font-medium">Free Cancellation</span>
+                )}
+              </div>
               <div className="flex gap-2 mt-2">
                 <Button size="sm" variant="outline" className="flex items-center gap-1" onClick={() => setViewVehicle(v)}><Car className="w-4 h-4" /> View</Button>
-                <Button size="sm" variant="outline" className="flex items-center gap-1"><Edit className="w-4 h-4" /> Edit</Button>
+                <Button size="sm" variant="outline" className="flex items-center gap-1" onClick={() => setEditVehicle(v)}><Edit className="w-4 h-4" /> Edit</Button>
                 <Button size="sm" variant="destructive" className="flex items-center gap-1" onClick={() => handleDeleteVehicle(v.id)} disabled={v.status === "Rented"}><Trash2 className="w-4 h-4" /> Delete</Button>
               </div>
             </Card>
@@ -293,8 +344,92 @@ export default function MyVehiclesPage() {
               {viewVehicle.fuel_type && <div><span className="font-semibold">Fuel Type:</span> {viewVehicle.fuel_type}</div>}
               {viewVehicle.seats !== null && viewVehicle.seats !== undefined && <div><span className="font-semibold">Seats:</span> {viewVehicle.seats}</div>}
               {viewVehicle.mileage !== null && viewVehicle.mileage !== undefined && <div><span className="font-semibold">Mileage:</span> {viewVehicle.mileage}</div>}
+              {viewVehicle.airconditioned && (
+                <div><span className="font-semibold">Feature:</span> Airconditioned</div>
+              )}
+              {viewVehicle.free_cancellation && (
+                <div><span className="font-semibold">Feature:</span> Free Cancellation</div>
+              )}
               {viewVehicle.vehicle_image && <div><span className="font-semibold">Image:</span> <img src={viewVehicle.vehicle_image} alt="Vehicle" className="w-full h-auto mt-2" /></div>}
             </div>
+          </div>
+        </div>
+      )}
+      {/* Edit Vehicle Modal */}
+      {editVehicle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md relative">
+            <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-700" onClick={() => setEditVehicle(null)}>&times;</button>
+            <h2 className="text-lg font-semibold mb-4">Edit Vehicle</h2>
+            <form
+              className="space-y-3"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                const updatedFields: Partial<Vehicle> = {
+                  vehicle_name: formData.get("vehicle_name")?.toString().trim() || editVehicle.vehicle_name,
+                  vehicle_type: formData.get("vehicle_type")?.toString().trim() || editVehicle.vehicle_type,
+                  plate_number: formData.get("plate_number")?.toString().trim() || editVehicle.plate_number,
+                  price_perday: Number(formData.get("price_perday")) || editVehicle.price_perday,
+                  status: formData.get("status")?.toString() || editVehicle.status,
+                  transmission: formData.get("transmission")?.toString() || null,
+                  fuel_type: formData.get("fuel_type")?.toString() || null,
+                  seats: formData.get("seats") ? Number(formData.get("seats")) : null,
+                  mileage: formData.get("mileage") ? Number(formData.get("mileage")) : null,
+                  airconditioned: formData.get("airconditioned") === "on",
+                  free_cancellation: formData.get("free_cancellation") === "on",
+                };
+                await handleEditVehicle(editVehicle.id, updatedFields);
+                setEditVehicle(null);
+              }}
+            >
+              <Input name="vehicle_name" defaultValue={editVehicle.vehicle_name} placeholder="Vehicle Name/Model" required />
+              <Input name="vehicle_type" defaultValue={editVehicle.vehicle_type} placeholder="Type (e.g. SUV, Sedan)" required />
+              <Input name="plate_number" defaultValue={editVehicle.plate_number} placeholder="Plate Number" required />
+              <Input name="price_perday" type="number" min={0} defaultValue={editVehicle.price_perday} placeholder="Price per Day" required />
+              <div className="flex gap-2">
+                <Settings className="w-5 h-5 text-gray-400 mt-2" />
+                <select name="transmission" className="w-full border border-input bg-background rounded-md px-3 py-2 text-sm focus:outline-none" defaultValue={editVehicle.transmission || ""}>
+                  <option value="">Transmission (optional)</option>
+                  <option value="Automatic">Automatic</option>
+                  <option value="Manual">Manual</option>
+                </select>
+              </div>
+              <div className="flex gap-2">
+                <Fuel className="w-5 h-5 text-gray-400 mt-2" />
+                <select name="fuel_type" className="w-full border border-input bg-background rounded-md px-3 py-2 text-sm focus:outline-none" defaultValue={editVehicle.fuel_type || ""}>
+                  <option value="">Fuel Type (optional)</option>
+                  <option value="Gasoline">Gasoline</option>
+                  <option value="Diesel">Diesel</option>
+                  <option value="Hybrid">Hybrid</option>
+                  <option value="Electric">Electric</option>
+                </select>
+              </div>
+              <div className="flex gap-2">
+                <UsersIcon className="w-5 h-5 text-gray-400 mt-2" />
+                <Input name="seats" type="number" min={1} defaultValue={editVehicle.seats ?? ''} placeholder="Seats (e.g. 5)" />
+              </div>
+              <div className="flex gap-2">
+                <Gauge className="w-5 h-5 text-gray-400 mt-2" />
+                <Input name="mileage" type="number" min={0} defaultValue={editVehicle.mileage ?? ''} placeholder="Mileage (e.g. 50000)" />
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="airconditioned_edit" name="airconditioned" className="accent-primary" defaultChecked={!!editVehicle.airconditioned} />
+                <label htmlFor="airconditioned_edit" className="text-sm">Airconditioned</label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="free_cancellation_edit" name="free_cancellation" className="accent-primary" defaultChecked={!!editVehicle.free_cancellation} />
+                <label htmlFor="free_cancellation_edit" className="text-sm">Free Cancellation</label>
+              </div>
+              <select name="status" className="w-full border border-input bg-background rounded-md px-3 py-2 text-sm focus:outline-none" defaultValue={editVehicle.status}>
+                <option value="Available">Available</option>
+                <option value="Rented">Rented</option>
+              </select>
+              {error && <div className="text-red-500 text-sm">{error}</div>}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Saving..." : "Save Changes"}
+              </Button>
+            </form>
           </div>
         </div>
       )}
