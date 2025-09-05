@@ -35,6 +35,9 @@ export default function MyVehiclesPage() {
   const [viewVehicle, setViewVehicle] = useState<Vehicle | null>(null);
   // Edit Vehicle Modal state
   const [editVehicle, setEditVehicle] = useState<Vehicle | null>(null);
+  // Add state for view type
+  const [viewType, setViewType] = useState<'grid' | 'list'>('grid');
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchVehicles = async () => {
@@ -213,14 +216,36 @@ export default function MyVehiclesPage() {
   };
 
   const hasVehicles = vehicleList.length > 0;
+  const filteredVehicles = vehicleList.filter(v => {
+    const term = searchTerm.toLowerCase();
+    return (
+      v.vehicle_name.toLowerCase().includes(term) ||
+      v.vehicle_type.toLowerCase().includes(term) ||
+      v.plate_number.toLowerCase().includes(term)
+    );
+  });
   return (
     <div className="max-w-5xl mx-auto py-8 px-2 sm:px-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold">My Vehicles</h1>
-        <Button className="flex items-center gap-2" onClick={() => setShowModal(true)}>
-          <PlusCircle className="w-5 h-5" /> Add New Vehicle
-        </Button>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <h1 className="text-2xl font-bold">My Vehicles</h1>
+         <Input
+            type="text"
+            placeholder="Search vehicles..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-48"
+          />
+        </div>
+        <div className="flex gap-2 items-center  ">
+         
+          <Button variant={viewType === 'grid' ? 'default' : 'outline'} size="sm" onClick={() => setViewType('grid')}>Grid</Button>
+          <Button variant={viewType === 'list' ? 'default' : 'outline'} size="sm" onClick={() => setViewType('list')}>List</Button>
+          <Button className="flex items-center gap-2" onClick={() => setShowModal(true)}>
+            <PlusCircle className="w-5 h-5" /> Add New Vehicle
+          </Button>
+        </div>
       </div>
       {/* Add Vehicle Modal */}
       {showModal && (
@@ -282,49 +307,90 @@ export default function MyVehiclesPage() {
       )}
       {/* Vehicle Grid or Empty State */}
       {hasVehicles ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {vehicleList.map((v: Vehicle) => (
-            <Card key={v.id} className="p-4 flex flex-col justify-between gap-3">
-              <div className="rounded-md h-32 flex items-center justify-center mb-2 bg-muted">
-                {v.vehicle_image ? (
-                  <img
-                    src={v.vehicle_image}
-                    alt={v.vehicle_name}
-                    className="object-contain h-28 w-full rounded"
-                  />
-                ) : (
-                  <Car className="w-12 h-12 text-muted-foreground" />
-                )}
-              </div>
-              <div className="flex flex-col gap-4  ">
-                <div className="font-semibold text-lg">{v.vehicle_name}</div>
-              <div className="text-muted-foreground text-sm">Type: {v.vehicle_type}</div>
-              <div className="text-muted-foreground text-sm">Plate: {v.plate_number}</div>
-              <div className="text-muted-foreground text-sm">Price/Day: <span className="font-medium text-blue-950 text-xl">${v.price_perday}</span></div>
-              {/* Status Badge */}
-              <div className={`text-xs bg-cyan-600 font-semibold rounded px-2 py-1 w-fit 
-                ${v.status === "Available" ? "bg-green-100 text-green-800" : ""}
-                ${v.status === "Rented" ? "bg-yellow-100 text-yellow-800" : ""}
-              `}>
-                {v.status}
-              </div>
-              </div>
-              <div className="flex gap-2 items-center   text-xs">
-                {v.airconditioned && (
-                  <span className="bg-secondary text-secondary-foreground px-2 py-0.5 rounded font-medium">Airconditioned</span>
-                )}
-                {v.free_cancellation && (
-                  <span className="bg-secondary text-secondary-foreground px-2 py-0.5 rounded font-medium">Free Cancellation</span>
-                )}
-              </div>
-              <div className="flex gap-2 mt-2    ">
-                <Button size="sm" variant="outline" className="flex items-center gap-1" onClick={() => setViewVehicle(v)}><Car className="w-4 h-4" /> View</Button>
-                <Button size="sm" variant="outline" className="flex items-center gap-1" onClick={() => setEditVehicle(v)}><Edit className="w-4 h-4" /> Edit</Button>
-                <Button size="sm" variant="secondary" className="flex items-center gap-1" onClick={() => handleDeleteVehicle(v.id)} disabled={v.status === "Rented"}><Trash2 className="w-4 h-4" /> Delete</Button>
-              </div>
-            </Card>
-          ))}
-        </div>
+        viewType === 'grid' ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredVehicles.map((v: Vehicle) => (
+              <Card key={v.id} className="p-4 flex flex-col justify-between gap-3">
+                <div className="rounded-md h-32 flex items-center justify-center mb-2 bg-muted">
+                  {v.vehicle_image ? (
+                    <img
+                      src={v.vehicle_image}
+                      alt={v.vehicle_name}
+                      className="object-contain h-28 w-full rounded"
+                    />
+                  ) : (
+                    <Car className="w-12 h-12 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex flex-col gap-4  ">
+                  <div className="font-semibold text-lg">{v.vehicle_name}</div>
+                <div className="text-muted-foreground text-sm">Type: {v.vehicle_type}</div>
+                <div className="text-muted-foreground text-sm">Plate: {v.plate_number}</div>
+                <div className="text-muted-foreground text-sm">Price/Day: <span className="font-medium text-blue-950 text-xl">${v.price_perday}</span></div>
+                {/* Status Badge */}
+                <div className={`text-xs bg-cyan-600 font-semibold rounded px-2 py-1 w-fit 
+                  ${v.status === "Available" ? "bg-green-100 text-green-800" : ""}
+                  ${v.status === "Rented" ? "bg-yellow-100 text-yellow-800" : ""}
+                `}>
+                  {v.status}
+                </div>
+                </div>
+                <div className="flex gap-2 items-center   text-xs">
+                  {v.airconditioned && (
+                    <span className="bg-secondary text-secondary-foreground px-2 py-0.5 rounded font-medium">Airconditioned</span>
+                  )}
+                  {v.free_cancellation && (
+                    <span className="bg-secondary text-secondary-foreground px-2 py-0.5 rounded font-medium">Free Cancellation</span>
+                  )}
+                </div>
+                <div className="flex gap-2 mt-2    ">
+                  <Button size="sm" variant="outline" className="flex items-center gap-1" onClick={() => setViewVehicle(v)}><Car className="w-4 h-4" /> View</Button>
+                  <Button size="sm" variant="outline" className="flex items-center gap-1" onClick={() => setEditVehicle(v)}><Edit className="w-4 h-4" /> Edit</Button>
+                  <Button size="sm" variant="secondary" className="flex items-center gap-1" onClick={() => handleDeleteVehicle(v.id)} disabled={v.status === "Rented"}><Trash2 className="w-4 h-4" /> Delete</Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {filteredVehicles.map((v: Vehicle) => (
+              <Card key={v.id} className="p-4 flex flex-row items-center gap-4">
+                <div className="rounded-md h-24 w-32 flex items-center justify-center bg-muted">
+                  {v.vehicle_image ? (
+                    <img src={v.vehicle_image} alt={v.vehicle_name} className="object-contain h-20 w-full rounded" />
+                  ) : (
+                    <Car className="w-10 h-10 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex-1 flex flex-col gap-1">
+                  <div className="font-semibold text-lg">{v.vehicle_name}</div>
+                  <div className="text-muted-foreground text-sm">Type: {v.vehicle_type}</div>
+                  <div className="text-muted-foreground text-sm">Plate: {v.plate_number}</div>
+                  <div className="text-muted-foreground text-sm">Price/Day: <span className="font-medium text-blue-950 text-xl">${v.price_perday}</span></div>
+                  <div className={`text-xs font-semibold rounded px-2 py-1 w-fit 
+                    ${v.status === "Available" ? "bg-green-100 text-green-800" : ""}
+                    ${v.status === "Rented" ? "bg-yellow-100 text-yellow-800" : ""}
+                  `}>
+                    {v.status}
+                  </div>
+                  <div className="flex gap-2 items-center text-xs mt-1">
+                    {v.airconditioned && (
+                      <span className="bg-secondary text-secondary-foreground px-2 py-0.5 rounded font-medium">Airconditioned</span>
+                    )}
+                    {v.free_cancellation && (
+                      <span className="bg-secondary text-secondary-foreground px-2 py-0.5 rounded font-medium">Free Cancellation</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 ml-4">
+                  <Button size="sm" variant="outline" className="flex items-center gap-1" onClick={() => setViewVehicle(v)}><Car className="w-4 h-4" /> View</Button>
+                  <Button size="sm" variant="outline" className="flex items-center gap-1" onClick={() => setEditVehicle(v)}><Edit className="w-4 h-4" /> Edit</Button>
+                  <Button size="sm" variant="secondary" className="flex items-center gap-1" onClick={() => handleDeleteVehicle(v.id)} disabled={v.status === "Rented"}><Trash2 className="w-4 h-4" /> Delete</Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )
       ) : (
         <div className="flex flex-col items-center justify-center py-20">
           <Car className="w-16 h-16 text-gray-300 mb-4" />
