@@ -1,47 +1,13 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { MapPin, Calendar, Car, Star, Users, Settings, Fuel, Shield, Baby, Navigation } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
 
 const vehicleTypes = ["All", "Economy", "SUV", "Luxury", "Van"];
-const vehicles = [
-  {
-    id: 1,
-    name: "Toyota Camry 2022",
-    category: "Economy",
-    price: 45,
-    rating: 4.5,
-    seats: 5,
-    transmission: "Automatic",
-    fuel: "Petrol",
-    description: "A reliable and fuel-efficient sedan, perfect for city and highway driving.",
-  },
-  {
-    id: 2,
-    name: "BMW X5 2023",
-    category: "Luxury",
-    price: 120,
-    rating: 4.9,
-    seats: 5,
-    transmission: "Automatic",
-    fuel: "Diesel",
-    description: "Premium SUV with luxury features and top safety ratings.",
-  },
-  {
-    id: 3,
-    name: "Honda CR-V 2021",
-    category: "SUV",
-    price: 70,
-    rating: 4.7,
-    seats: 5,
-    transmission: "Automatic",
-    fuel: "Hybrid",
-    description: "Spacious SUV with great mileage and comfort for families.",
-  },
-];
 
 const addOns = [
   { label: "GPS", icon: Navigation },
@@ -49,9 +15,48 @@ const addOns = [
   { label: "Insurance", icon: Shield },
 ];
 
+// Use the same Vehicle interface as in /my-vehicles
+interface Vehicle {
+  id: number;
+  vehicle_name: string;
+  vehicle_type: string;
+  plate_number: string;
+  price_perday: number;
+  status: string;
+  transmission?: string | null;
+  fuel_type?: string | null;
+  seats?: number | null;
+  mileage?: number | null;
+  vehicle_image?: string | null;
+  airconditioned?: boolean;
+  free_cancellation?: boolean;
+  description?: string;
+  rating?: number;
+  owner_name?: string;
+  rental_image?: string;
+}
+
 export default function BookAVehiclePage() {
   const [vehicleType, setVehicleType] = useState("All");
-  const [modal, setModal] = useState(null as (typeof vehicles)[0] | null);
+  const [modal, setModal] = useState<Vehicle | null>(null);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchVehicles = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("vehicles")
+        .select("*");
+      if (!error && data) {
+        setVehicles(data);
+      } else {
+        setVehicles([]);
+      }
+      setLoading(false);
+    };
+    fetchVehicles();
+  }, []);
 
   return (
     <div className="max-w-6xl mx-auto py-8 px-2 sm:px-4">
@@ -90,64 +95,105 @@ export default function BookAVehiclePage() {
       </div>
       {/* Vehicle Listing */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {vehicles
-          .filter((v) => vehicleType === "All" || v.category === vehicleType)
-          .map((v) => (
-            <Card key={v.id} className="flex flex-col items-center p-6 gap-4">
-              <div className="flex items-center justify-center w-24 h-24 bg-gray-100 rounded-full mb-2">
-                <Car className="w-12 h-12 text-gray-400" />
-              </div>
-              <div className="font-bold text-lg text-center">{v.name}</div>
-              <div className="text-sm text-gray-500 mb-1">{v.category}</div>
-              <div className="text-blue-700 font-bold text-xl mb-1">${v.price}/day</div>
-              <div className="flex items-center gap-1 mb-2">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className={`w-4 h-4 ${i < Math.round(v.rating) ? "text-yellow-400" : "text-gray-300"}`} fill={i < Math.round(v.rating) ? "#facc15" : "none"} />
-                ))}
-                <span className="text-xs text-gray-500 ml-1">{v.rating}</span>
-              </div>
-              <div className="flex gap-4 text-sm text-gray-600 mb-4">
-                <span className="flex items-center gap-1"><Users className="w-4 h-4" />{v.seats} seats</span>
-                <span className="flex items-center gap-1"><Settings className="w-4 h-4" />{v.transmission}</span>
-                <span className="flex items-center gap-1"><Fuel className="w-4 h-4" />{v.fuel}</span>
-              </div>
-              <Button className="w-full" onClick={() => setModal(v)}>Book Now</Button>
-            </Card>
-          ))}
+        {loading ? (
+          <div className="col-span-full text-center text-gray-400 py-12">Loading vehicles...</div>
+        ) : vehicles.length === 0 ? (
+          <div className="col-span-full text-center text-gray-400 py-12">No vehicles found.</div>
+        ) : (
+          vehicles
+            .filter((v) => vehicleType === "All" || v.vehicle_type === vehicleType)
+            .map((v) => (
+              <Card key={v.id} className="p-4 flex flex-col justify-between gap-3">
+                {/* Owner avatar and name */}
+                <div className="flex items-center gap-2 mb-2 h-4 w-4 bg-amber-300">
+                  {v.rental_image && (
+                    <img src={v.rental_image} alt="Rental" className="object-cover h-8 w-8 rounded-full border-2 border-white shadow" />
+                  )}
+                  {v.owner_name && (
+                    <span className="text-xs text-muted-foreground h-4 w-4 bg-amber-300">By {v.owner_name}</span>
+                  )}
+                </div>
+                <div className="rounded-md h-32 flex items-center justify-center mb-2 bg-muted">
+                  {v.rental_image ? (
+                    <img src={v.rental_image} alt="Rental" className="object-cover h-10 w-10 rounded-full absolute top-2 left-2 border-2 border-white shadow" style={{zIndex:2}} />
+                  ) : null}
+                  {v.vehicle_image ? (
+                    <img
+                      src={v.vehicle_image}
+                      alt={v.vehicle_name}
+                      className="object-contain h-28 w-full rounded"
+                    />
+                  ) : (
+                    <Car className="w-12 h-12 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex flex-col gap-4  ">
+                  <div className="font-semibold text-lg">{v.vehicle_name}</div>
+                  {v.owner_name && (
+                    <div className="text-xs text-muted-foreground">By {v.owner_name}</div>
+                  )}
+                  <div className="text-muted-foreground text-sm">Type: {v.vehicle_type}</div>
+                  <div className="text-muted-foreground text-sm">Plate: {v.plate_number}</div>
+                  <div className="text-muted-foreground text-sm">Price/Day: <span className="font-medium text-blue-950 text-xl">${v.price_perday}</span></div>
+                  {/* Status Badge */}
+                  <div className={`text-xs bg-cyan-600 font-semibold rounded px-2 py-1 w-fit 
+                    ${v.status === "Available" ? "bg-green-100 text-green-800" : ""}
+                    ${v.status === "Rented" ? "bg-yellow-100 text-yellow-800" : ""}
+                  `}>
+                    {v.status}
+                  </div>
+                </div>
+                <div className="flex gap-2 items-center   text-xs">
+                  {v.airconditioned && (
+                    <span className="bg-secondary text-secondary-foreground px-2 py-0.5 rounded font-medium">Airconditioned</span>
+                  )}
+                  {v.free_cancellation && (
+                    <span className="bg-secondary text-secondary-foreground px-2 py-0.5 rounded font-medium">Free Cancellation</span>
+                  )}
+                </div>
+                <div className="flex gap-2 mt-2    ">
+                  <Button size="sm" variant="outline" className="flex items-center gap-1" onClick={() => setModal(v)}><Car className="w-4 h-4" /> View</Button>
+                </div>
+              </Card>
+            ))
+        )}
       </div>
       {/* Modal */}
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-lg relative">
             <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl" onClick={() => setModal(null)}>&times;</button>
-            <div className="flex flex-col items-center mb-4">
-              <div className="flex items-center justify-center w-32 h-32 bg-gray-100 rounded-full mb-4">
-                <Car className="w-16 h-16 text-gray-400" />
+            <div className="space-y-2">
+              <div className="rounded-md h-32 flex items-center justify-center mb-2 bg-muted">
+                {modal.vehicle_image ? (
+                  <img src={modal.vehicle_image} alt={modal.vehicle_name} className="object-contain h-28 w-full rounded" />
+                ) : (
+                  <Car className="w-12 h-12 text-muted-foreground" />
+                )}
               </div>
-              <div className="font-bold text-2xl mb-1">{modal.name}</div>
-              <div className="text-sm text-gray-500 mb-2">{modal.category}</div>
-              <div className="text-gray-700 text-center mb-4">{modal.description}</div>
-            </div>
-            <div className="flex items-center gap-2 mb-2">
-              <Calendar className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-600">Available: Aug 28 – Sep 30, 2025</span>
-            </div>
-            <div className="mb-2">
-              <span className="font-semibold">Pricing:</span>
-              <div className="text-sm text-gray-700">${modal.price} x 3 days = ${modal.price * 3 || modal.price * 1} (example)</div>
-            </div>
-            <div className="mb-4">
-              <span className="font-semibold">Add-ons:</span>
-              <div className="flex gap-4 mt-2">
-                {addOns.map(({ label, icon: Icon }) => (
-                  <div key={label} className="flex flex-col items-center text-xs text-gray-600">
-                    <Icon className="w-6 h-6 mb-1" />
-                    {label}
-                  </div>
-                ))}
+              <div className="font-semibold text-lg">{modal.vehicle_name}</div>
+              <div className="text-muted-foreground text-sm">Type: {modal.vehicle_type}</div>
+              <div className="text-muted-foreground text-sm">Plate: {modal.plate_number}</div>
+              <div className="text-muted-foreground text-sm">Price/Day: <span className="font-medium text-blue-950 text-xl">${modal.price_perday}</span></div>
+              <div className={`text-xs bg-cyan-600 font-semibold rounded px-2 py-1 w-fit 
+                ${modal.status === "Available" ? "bg-green-100 text-green-800" : ""}
+                ${modal.status === "Rented" ? "bg-yellow-100 text-yellow-800" : ""}
+              `}>
+                {modal.status}
               </div>
+              {modal.transmission && <div className="text-muted-foreground text-sm">Transmission: {modal.transmission}</div>}
+              {modal.fuel_type && <div className="text-muted-foreground text-sm">Fuel Type: {modal.fuel_type}</div>}
+              {modal.seats !== null && modal.seats !== undefined && <div className="text-muted-foreground text-sm">Seats: {modal.seats}</div>}
+              {modal.mileage !== null && modal.mileage !== undefined && <div className="text-muted-foreground text-sm">Mileage: {modal.mileage}</div>}
+              {modal.airconditioned && (
+                <div className="flex items-center gap-1"><Settings className="w-4 h-4 text-muted-foreground" /><span className="font-semibold">Feature:</span> Airconditioned</div>
+              )}
+              {modal.free_cancellation && (
+                <div className="flex items-center gap-1"><Button className="w-4 h-4 p-0" variant="ghost" disabled><span className="sr-only">Free Cancellation</span></Button><span className="font-semibold">Feature:</span> Free Cancellation</div>
+              )}
+             
             </div>
-            <Button className="w-full">Confirm Booking</Button>
+            <Button className="w-full mt-6">Confirm Booking</Button>
           </div>
         </div>
       )}

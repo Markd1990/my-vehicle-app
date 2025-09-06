@@ -58,7 +58,7 @@ export default function LoginForm() {
       // Set redirect path based on role
       const role = user.user_metadata?.role;
       if (role === "client") {
-        redirectPath = "/client/profile";
+        redirectPath = "/profile";
       } else if (role === "rentalowner" || role === "rental-owner" || role === "rental_owner") {
         redirectPath = "/owners-profile";
       }
