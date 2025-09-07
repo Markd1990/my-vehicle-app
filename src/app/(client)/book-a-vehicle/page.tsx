@@ -249,6 +249,21 @@ export default function BookAVehiclePage() {
               &times;
             </button>
             <div className="space-y-2">
+              {/* Rental avatar and name in modal */}
+              <div className="flex items-center gap-2 mb-2">
+                {modal.rental_details?.rental_image && (
+                  <img
+                    src={modal.rental_details.rental_image}
+                    alt="Rental"
+                    className="object-cover h-8 w-8 rounded-full border-2 border-white shadow"
+                  />
+                )}
+                {modal.rental_details?.rental_name && (
+                  <span className="text-xs font-semibold text-blue-900 ml-2">
+                    {modal.rental_details.rental_name}
+                  </span>
+                )}
+              </div>
               <div className="rounded-md h-32 flex items-center justify-center mb-2 bg-muted">
                 {modal.vehicle_image ? (
                   <img

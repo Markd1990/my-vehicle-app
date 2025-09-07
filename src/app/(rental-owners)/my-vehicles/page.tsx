@@ -7,6 +7,12 @@ import { supabase } from "@/lib/supabaseClient";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 
+// Define a type for rental details
+interface RentalDetails {
+  rental_name?: string;
+  rental_image?: string;
+}
+
 // Define a type for vehicles matching your Supabase schema
 interface Vehicle {
   id: number;
@@ -22,6 +28,8 @@ interface Vehicle {
   vehicle_image?: string | null;
   airconditioned?: boolean;
   free_cancellation?: boolean;
+  owner_id?: string;
+  rental_details?: RentalDetails;
 }
 
 export default function MyVehiclesPage() {
@@ -33,6 +41,7 @@ export default function MyVehiclesPage() {
   const formRef = useRef<HTMLFormElement>(null);
   // State for viewing a vehicle
   const [viewVehicle, setViewVehicle] = useState<Vehicle | null>(null);
+  const [viewRentalDetails, setViewRentalDetails] = useState<RentalDetails | null>(null);
   // Edit Vehicle Modal state
   const [editVehicle, setEditVehicle] = useState<Vehicle | null>(null);
   // Add state for view type
@@ -63,6 +72,27 @@ export default function MyVehiclesPage() {
     };
     fetchVehicles();
   }, []);
+
+  // Fetch rental details when opening view modal
+  useEffect(() => {
+    const fetchRentalDetails = async () => {
+      if (viewVehicle && viewVehicle.owner_id) {
+        const { data, error } = await supabase
+          .from("rental_details")
+          .select("rental_name, rental_image")
+          .eq("user_id", viewVehicle.owner_id)
+          .single();
+        if (!error && data) {
+          setViewRentalDetails(data);
+        } else {
+          setViewRentalDetails(null);
+        }
+      } else {
+        setViewRentalDetails(null);
+      }
+    };
+    fetchRentalDetails();
+  }, [viewVehicle]);
 
   // Add vehicle handler
   const handleAddVehicle = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -407,10 +437,21 @@ export default function MyVehiclesPage() {
             <button className="absolute top-2 right-2 text-muted-foreground hover:text-foreground" onClick={() => setViewVehicle(null)}>&times;</button>
             <h2 className="text-lg font-semibold mb-4">Vehicle Details</h2>
             <div className="space-y-2">
+              {/* Rental avatar and name */}
+              {viewRentalDetails?.rental_image || viewRentalDetails?.rental_name ? (
+                <div className="flex items-center gap-2 mb-2">
+                  {viewRentalDetails?.rental_image && (
+                    <img src={viewRentalDetails.rental_image} alt="Rental" className="object-cover h-8 w-8 rounded-full border-2 border-white shadow" />
+                  )}
+                  {viewRentalDetails?.rental_name && (
+                    <span className="text-xs font-semibold text-blue-900 ml-2">{viewRentalDetails.rental_name}</span>
+                  )}
+                </div>
+              ) : null}
               <div><span className="font-semibold">Name/Model:</span> {viewVehicle.vehicle_name}</div>
               <div><span className="font-semibold">Type:</span> {viewVehicle.vehicle_type}</div>
               <div><span className="font-semibold">Plate Number:</span> {viewVehicle.plate_number}</div>
-              <div><span className=" font-semibold">Price per Day:</span> ${viewVehicle.price_perday}</div>
+              <div><span  className=" font-semibold">Price per Day:</span> ${viewVehicle.price_perday}</div>
               <div><span  className=" font-semibold">Status:</span> {viewVehicle.status}</div>
               {viewVehicle.transmission && <div><span className="font-semibold">Transmission:</span> {viewVehicle.transmission}</div>}
               {viewVehicle.fuel_type && <div><span className="font-semibold">Fuel Type:</span> {viewVehicle.fuel_type}</div>}
@@ -422,7 +463,7 @@ export default function MyVehiclesPage() {
               {viewVehicle.free_cancellation && (
                 <div className="flex items-center gap-1"><Edit className="w-4 h-4 text-muted-foreground" /><span className="font-semibold">Feature:</span> Free Cancellation</div>
               )}
-              {viewVehicle.vehicle_image && <div><span className="font-semibold">Image:</span> <img src={viewVehicle.vehicle_image} alt="Vehicle" className="w-full h-auto mt-2 rounded" /></div>}
+              {viewVehicle.vehicle_image && <div><span className="font-semibold">Image:</span> <img src={viewVehicle.vehicle_image} alt="Vehicle" className="w-2xs h-auto mt-2 rounded" /> </div>}
             </div>
           </Card>
         </div>
