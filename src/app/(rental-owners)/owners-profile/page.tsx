@@ -4,8 +4,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
- 
- 
+import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui/dialog";
+
 import { Mail, Phone, MapPin, Building2, Car, BarChart2, Lock, Bell, HelpCircle, User, Briefcase } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -22,6 +22,9 @@ export default function OwnersProfilePage() {
   const rentalImageInputRef = useRef<HTMLInputElement>(null);
   const [rentalImageUploading, setRentalImageUploading] = useState(false);
   const [rentalImageError, setRentalImageError] = useState<string | null>(null);
+  // Modal state
+  const [showAccountModal, setShowAccountModal] = useState(false);
+  const [showRentalModal, setShowRentalModal] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -146,7 +149,7 @@ export default function OwnersProfilePage() {
     <div className="max-w-4xl mx-auto py-10 px-2 sm:px-4 space-y-8">
       {/* 1. Account Info */}
       <Card className="relative rounded-xl shadow-lg p-6 flex flex-col sm:flex-row gap-6 items-center">
-        <div className="absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-blue-600" onClick={() => setEditAccount(true)}>
+        <div className="absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-blue-600" onClick={() => setShowAccountModal(true)}>
           <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil w-5 h-5"><path d="M15.232 5.232l3.536 3.536M9 11l6 6M3 21h6l11.293-11.293a1 1 0 0 0 0-1.414l-3.586-3.586a1 1 0 0 0-1.414 0L3 15v6z"></path></svg>
         </div>
         <div className="flex flex-col items-center">
@@ -157,45 +160,50 @@ export default function OwnersProfilePage() {
         </div>
         <div className="flex-1">
           <div className="font-semibold text-lg mb-2">Account Info</div>
-          {editAccount ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Avatar upload */}
-              <div className="col-span-2 flex flex-col gap-2">
-                <label className="font-medium">Avatar</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  ref={avatarInputRef}
-                  onChange={handleAvatarChange}
-                  disabled={avatarUploading}
-                  className="block"
-                />
-                {avatarUploading && <span className="text-xs text-blue-500">Uploading...</span>}
-                {avatarError && <span className="text-xs text-red-500">{avatarError}</span>}
-              </div>
-              <Input value={formAccount.user_name || ""} onChange={e => setFormAccount((f: any) => ({ ...f, user_name: e.target.value }))} placeholder="Name" />
-              <Input value={formAccount.user_email || ""} disabled placeholder="Email" />
-              <Input value={formAccount.contact_number || ""} onChange={e => setFormAccount((f: any) => ({ ...f, contact_number: e.target.value }))} placeholder="Contact Number" />
-              <Input value={formAccount.address || ""} onChange={e => setFormAccount((f: any) => ({ ...f, address: e.target.value }))} placeholder="Address" className="col-span-2" />
-              <div className="col-span-2 flex gap-2 mt-2">
-                <Button onClick={handleSaveAccount} disabled={loading}>Save</Button>
-                <Button variant="outline" onClick={() => setEditAccount(false)} disabled={loading}>Cancel</Button>
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex items-center gap-2 text-gray-700"><User className="w-4 h-4" /> {profile.user_name || "-"}</div>
-              <div className="flex items-center gap-2 text-gray-700"><Mail className="w-4 h-4" /> {profile.user_email || "-"}</div>
-              <div className="flex items-center gap-2 text-gray-700"><Phone className="w-4 h-4" /> {profile.contact_number || "-"}</div>
-              <div className="flex items-center gap-2 text-gray-700 col-span-2"><MapPin className="w-4 h-4" /> {profile.address || "-"}</div>
-            </div>
-          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex items-center gap-2 text-gray-700"><User className="w-4 h-4" /> {profile.user_name || "-"}</div>
+            <div className="flex items-center gap-2 text-gray-700"><Mail className="w-4 h-4" /> {profile.user_email || "-"}</div>
+            <div className="flex items-center gap-2 text-gray-700"><Phone className="w-4 h-4" /> {profile.contact_number || "-"}</div>
+            <div className="flex items-center gap-2 text-gray-700 col-span-2"><MapPin className="w-4 h-4" /> {profile.address || "-"}</div>
+          </div>
         </div>
       </Card>
+      <Dialog open={showAccountModal} onOpenChange={setShowAccountModal}>
+        <DialogContent>
+          <DialogTitle>Edit Account Info</DialogTitle>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Avatar upload */}
+            <div className="col-span-2 flex flex-col gap-2">
+              <label className="font-medium">Avatar</label>
+              <input
+                type="file"
+                accept="image/*"
+                ref={avatarInputRef}
+                onChange={handleAvatarChange}
+                disabled={avatarUploading}
+                className="block"
+              />
+              {avatarUploading && <span className="text-xs text-blue-500">Uploading...</span>}
+              {avatarError && <span className="text-xs text-red-500">{avatarError}</span>}
+            </div>
+            <Input value={formAccount.user_name || ""} onChange={e => setFormAccount((f: any) => ({ ...f, user_name: e.target.value }))} placeholder="Name" />
+            <Input value={formAccount.user_email || ""} disabled placeholder="Email" />
+            <Input value={formAccount.contact_number || ""} onChange={e => setFormAccount((f: any) => ({ ...f, contact_number: e.target.value }))} placeholder="Contact Number" />
+            <Input value={formAccount.address || ""} onChange={e => setFormAccount((f: any) => ({ ...f, address: e.target.value }))} placeholder="Address" className="col-span-2" />
+            <div className="col-span-2 flex gap-2 mt-2">
+              <Button onClick={async () => { await handleSaveAccount(); setShowAccountModal(false); }} disabled={loading}>Save</Button>
+              <Button variant="outline" onClick={() => setShowAccountModal(false)} disabled={loading}>Cancel</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* 2. Rental Info */}
       <Card className="relative rounded-xl shadow-lg p-6 flex flex-col sm:flex-row gap-6 items-center">
-        <div className="absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-blue-600" onClick={() => formRental && setEditRental(true)}>
+        <div className="absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-blue-600" onClick={() => {
+          if (!formRental) setFormRental({ rental_name: '', rental_email: '', rental_contact: '', rental_location: '', rental_image: '' });
+          setShowRentalModal(true);
+        }}>
           <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil w-5 h-5"><path d="M15.232 5.232l3.536 3.536M9 11l6 6M3 21h6l11.293-11.293a1 1 0 0 0 0-1.414l-3.586-3.586a1 1 0 0 0-1.414 0L3 15v6z"></path></svg>
         </div>
        <div className="flex flex-col items-center">
@@ -214,45 +222,13 @@ export default function OwnersProfilePage() {
         <div className="flex-1">
           <div className="font-semibold text-lg mb-2">Rental Info</div>
           {formRental ? (
-            editRental ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Rental image upload */}
-                <div className="col-span-2 flex flex-col gap-2">
-                  <label className="font-medium">Rental Image</label>
-                  {formRental.rental_image && (
-                    <img src={formRental.rental_image} alt="Rental" className="w-32 h-20 object-cover rounded mb-2 border" />
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    ref={rentalImageInputRef}
-                    onChange={handleRentalImageChange}
-                    disabled={rentalImageUploading}
-                    className="block"
-                  />
-                  {rentalImageUploading && <span className="text-xs text-blue-500">Uploading...</span>}
-                  {rentalImageError && <span className="text-xs text-red-500">{rentalImageError}</span>}
-                </div>
-                <Input value={formRental.rental_name || ""} onChange={e => setFormRental((f: any) => ({ ...f, rental_name: e.target.value }))} placeholder="Rental Name" />
-                <Input value={formRental.rental_email || ""} onChange={e => setFormRental((f: any) => ({ ...f, rental_email: e.target.value }))} placeholder="Rental Email" />
-                <Input value={formRental.rental_contact || ""} onChange={e => setFormRental((f: any) => ({ ...f, rental_contact: e.target.value }))} placeholder="Rental Contact" />
-                <Input value={formRental.rental_location || ""} onChange={e => setFormRental((f: any) => ({ ...f, rental_location: e.target.value }))} placeholder="Rental Location" className="col-span-2" />
-                <div className="col-span-2 flex gap-2 mt-2">
-                  <Button onClick={handleSaveRental} disabled={loading}>Save</Button>
-                  <Button variant="outline" onClick={() => setEditRental(false)} disabled={loading}>Cancel</Button>
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex items-center gap-2 text-gray-700"><Building2 className="w-4 h-4" /> {formRental.rental_name || "-"}</div>
-                <div className="flex items-center gap-2 text-gray-700"><Mail className="w-4 h-4" /> {formRental.rental_email || "-"}</div>
-                <div className="flex items-center gap-2 text-gray-700"><Phone className="w-4 h-4" /> {formRental.rental_contact || "-"}</div>
-                <div className="flex items-center gap-2 text-gray-700 col-span-2"><MapPin className="w-4 h-4" /> {formRental.rental_location || "-"}</div>
-                <div className="col-span-2 flex gap-2 mt-2">
-                  <Button onClick={() => setEditRental(true)} variant="outline">Edit</Button>
-                </div>
-              </div>
-            )
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex items-center gap-2 text-gray-700"><Building2 className="w-4 h-4" /> {formRental.rental_name || "-"}</div>
+              <div className="flex items-center gap-2 text-gray-700"><Mail className="w-4 h-4" /> {formRental.rental_email || "-"}</div>
+              <div className="flex items-center gap-2 text-gray-700"><Phone className="w-4 h-4" /> {formRental.rental_contact || "-"}</div>
+              <div className="flex items-center gap-2 text-gray-700 col-span-2"><MapPin className="w-4 h-4" /> {formRental.rental_location || "-"}</div>
+               
+            </div>
           ) : (
             <div className="text-gray-500 flex flex-col gap-2">
               <span>No rental info found. Please add your rental details.</span>
@@ -261,6 +237,38 @@ export default function OwnersProfilePage() {
           )}
         </div>
       </Card>
+      <Dialog open={showRentalModal} onOpenChange={setShowRentalModal}>
+        <DialogContent>
+          <DialogTitle>Edit Rental Info</DialogTitle>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Rental image upload */}
+            <div className="col-span-2 flex flex-col gap-2">
+              <label className="font-medium">Rental Image</label>
+              {formRental?.rental_image && (
+                <img src={formRental.rental_image} alt="Rental" className="w-32 h-20 object-cover rounded mb-2 border" />
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                ref={rentalImageInputRef}
+                onChange={handleRentalImageChange}
+                disabled={rentalImageUploading}
+                className="block"
+              />
+              {rentalImageUploading && <span className="text-xs text-blue-500">Uploading...</span>}
+              {rentalImageError && <span className="text-xs text-red-500">{rentalImageError}</span>}
+            </div>
+            <Input value={formRental?.rental_name || ""} onChange={e => setFormRental((f: any) => ({ ...f, rental_name: e.target.value }))} placeholder="Rental Name" />
+            <Input value={formRental?.rental_email || ""} onChange={e => setFormRental((f: any) => ({ ...f, rental_email: e.target.value }))} placeholder="Rental Email" />
+            <Input value={formRental?.rental_contact || ""} onChange={e => setFormRental((f: any) => ({ ...f, rental_contact: e.target.value }))} placeholder="Rental Contact" />
+            <Input value={formRental?.rental_location || ""} onChange={e => setFormRental((f: any) => ({ ...f, rental_location: e.target.value }))} placeholder="Rental Location" className="col-span-2" />
+            <div className="col-span-2 flex gap-2 mt-2">
+              <Button onClick={async () => { await handleSaveRental(); setShowRentalModal(false); }} disabled={loading}>Save</Button>
+              <Button variant="outline" onClick={() => setShowRentalModal(false)} disabled={loading}>Cancel</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* 3. Vehicle Management */}
       <Card className="p-6 flex flex-col sm:flex-row items-center gap-6 justify-between">
